@@ -1,0 +1,16 @@
+[project]
+name = "customer-support-env"
+version = "1.0.0"
+description = "Customer Support Triage Environment for OpenEnv"
+requires-python = ">=3.10"
+dependencies = [
+    "openai",
+    "pydantic",
+    "pyyaml",
+    "fastapi",
+    "uvicorn",
+    "httpx",
+]
+
+[project.entry-points."openenv.environments"]
+customer-support-triage = "environment:CustomerSupportEnv"
