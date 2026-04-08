@@ -10,7 +10,11 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "httpx",
+    "openenv-core>=0.2.0",
 ]
+
+[project.scripts]
+server = "server:app"
 
 [project.entry-points."openenv.environments"]
 customer-support-triage = "environment:CustomerSupportEnv"
