@@ -58,48 +58,68 @@ PRIORITY_PARTIAL = {
 # ─── Graders ───────────────────────────────────────────────
 
 def grade_easy(env) -> float:
-    if not env.classified or env.current_ticket is None:
+    try:
+        if not hasattr(env, 'classified') or not env.classified:
+            return 0.01
+        if not hasattr(env, 'current_ticket') or env.current_ticket is None:
+            return 0.01
+        if not hasattr(env, 'category_given') or env.category_given is None:
+            return 0.01
+        if env.category_given == env.current_ticket["true_category"]:
+            return 0.99
         return 0.01
-    if env.category_given == env.current_ticket["true_category"]:
-        return 0.99
-    return 0.01
+    except:
+        return 0.01
 
 
 def grade_medium(env) -> float:
-    if env.current_ticket is None:
+    try:
+        if not hasattr(env, 'current_ticket') or env.current_ticket is None:
+            return 0.01
+        score = 0.01
+        if hasattr(env, 'classified') and env.classified:
+            if hasattr(env, 'category_given') and env.category_given:
+                if env.category_given == env.current_ticket["true_category"]:
+                    score += 0.48
+        if hasattr(env, 'prioritized') and env.prioritized:
+            if hasattr(env, 'priority_given') and env.priority_given:
+                if env.priority_given == env.current_ticket["true_priority"]:
+                    score += 0.48
+                else:
+                    partial = PRIORITY_PARTIAL.get(
+                        (env.priority_given, env.current_ticket["true_priority"]), 0.01
+                    )
+                    score += partial
+        return round(max(0.01, min(0.99, score)), 2)
+    except:
         return 0.01
-    score = 0.01
-    if env.classified and env.category_given == env.current_ticket["true_category"]:
-        score += 0.5
-    if env.prioritized:
-        if env.priority_given == env.current_ticket["true_priority"]:
-            score += 0.5
-        else:
-            partial = PRIORITY_PARTIAL.get(
-                (env.priority_given, env.current_ticket["true_priority"]), 0.0
-            )
-            score += partial
-    return strict_score(score)
 
 
 def grade_hard(env) -> float:
-    if env.current_ticket is None:
+    try:
+        if not hasattr(env, 'current_ticket') or env.current_ticket is None:
+            return 0.01
+        score = 0.01
+        if hasattr(env, 'classified') and env.classified:
+            if hasattr(env, 'category_given') and env.category_given:
+                if env.category_given == env.current_ticket["true_category"]:
+                    score += 0.28
+        if hasattr(env, 'prioritized') and env.prioritized:
+            if hasattr(env, 'priority_given') and env.priority_given:
+                if env.priority_given == env.current_ticket["true_priority"]:
+                    score += 0.28
+                else:
+                    partial = PRIORITY_PARTIAL.get(
+                        (env.priority_given, env.current_ticket["true_priority"]), 0.01
+                    )
+                    score += partial
+        if hasattr(env, 'replied') and env.replied:
+            if hasattr(env, 'reply_given') and env.reply_given:
+                reply_score = env._grade_reply(env.reply_given)
+                score += reply_score * 0.38
+        return round(max(0.01, min(0.99, score)), 2)
+    except:
         return 0.01
-    score = 0.01
-    if env.classified and env.category_given == env.current_ticket["true_category"]:
-        score += 0.3
-    if env.prioritized:
-        if env.priority_given == env.current_ticket["true_priority"]:
-            score += 0.3
-        else:
-            partial = PRIORITY_PARTIAL.get(
-                (env.priority_given, env.current_ticket["true_priority"]), 0.0
-            )
-            score += partial
-    if env.replied and env.reply_given:
-        reply_score = env._grade_reply(env.reply_given)
-        score += reply_score * 0.4
-    return strict_score(score)
 
 
 def get_grader(task_level: str):
