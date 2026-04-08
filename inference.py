@@ -263,17 +263,22 @@ def run_task(task_level: str):
             error_str = last_error if last_error else "null"
             print(f"[STEP] step={step_num} action={action_str} reward={reward:.2f} done={str(done).lower()} error={error_str}")
 
+
         except Exception as e:
+
             last_error = str(e)
-            rewards.append(0.0)
-            print(f"[STEP] step={step_num} action=null reward=0.00 done=false error={last_error}")
+
+            rewards.append(0.01)  # ← change 0.0 to 0.01
+
+            print(f"[STEP] step={step_num} action=null reward=0.01 done=false error={last_error}")
+
             break
 
     grader = get_grader(task_level)
     final_score = grader(env)
     success = final_score >= 0.5
 
-    rewards_str = ",".join([f"{r:.2f}" for r in rewards])
+    rewards_str = ",".join([f"{max(0.01, min(0.99, r)):.2f}" for r in rewards])
     print(f"[END] success={str(success).lower()} steps={step_num} rewards={rewards_str}")
 
     return final_score

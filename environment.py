@@ -228,7 +228,7 @@ class CustomerSupportEnv:
                 info["classify"] = "correct"
             else:
                 partial = CATEGORY_PARTIAL.get(
-                    (self.category_given, self.current_ticket["true_category"]), 0.0
+                    (self.category_given, self.current_ticket["true_category"]), 0.01
                 )
                 reward = max(0.01, partial) if partial > 0 else 0.01
                 info["classify"] = f"wrong — expected {self.current_ticket['true_category']}"

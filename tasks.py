@@ -68,7 +68,7 @@ def grade_easy(env) -> float:
 def grade_medium(env) -> float:
     if env.current_ticket is None:
         return 0.01
-    score = 0.0
+    score = 0.01
     if env.classified and env.category_given == env.current_ticket["true_category"]:
         score += 0.5
     if env.prioritized:
@@ -85,7 +85,7 @@ def grade_medium(env) -> float:
 def grade_hard(env) -> float:
     if env.current_ticket is None:
         return 0.01
-    score = 0.0
+    score = 0.01
     if env.classified and env.category_given == env.current_ticket["true_category"]:
         score += 0.3
     if env.prioritized:

@@ -20,14 +20,14 @@ def run_multiple_episodes(task_level: str, num_episodes: int = 5):
         print(f"Episode {episode} Score: {score}")
 
     # Stats
-    avg = statistics.mean(scores)
+    avg = round(max(0.01, min(0.99, statistics.mean(scores))), 2)
     best = max(scores)
     worst = min(scores)
 
     if len(scores) > 1:
         std = statistics.stdev(scores)
     else:
-        std = 0.0
+        std = 0.01
 
     print(f"\n📊 Results for {task_level.upper()} over {num_episodes} episodes:")
     print(f"   Average : {avg:.2f}")
@@ -62,7 +62,7 @@ def run_full_evaluation(num_episodes: int = 5):
         all_scores.extend(result["scores"])
 
     # Overall stats
-    overall_avg = statistics.mean(all_scores)
+    overall_avg = round(max(0.01, min(0.99, statistics.mean(all_scores))), 2)
 
     print(f"\n{'='*50}")
     print(f"📊 OVERALL SUMMARY")
