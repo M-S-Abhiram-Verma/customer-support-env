@@ -1,5 +1,11 @@
 from environment import CustomerSupportEnv, Action
 
+
+def clip_score(score: float) -> float:
+    """Ensure score is strictly between 0 and 1 (not 0.0, not 1.0)"""
+    return round(max(0.01, min(0.99, score)), 2)
+
+
 # ─── Task Definitions ──────────────────────────────────────
 
 TASKS = {
@@ -29,22 +35,8 @@ TASKS = {
 }
 
 
-# ─── Graders ───────────────────────────────────────────────
+# ─── Priority Partial Credit ───────────────────────────────
 
-def grade_easy(env: CustomerSupportEnv) -> float:
-    """
-    Easy task grader
-    - Correct category = 1.0
-    - Wrong category   = 0.0
-    """
-    if not env.classified:
-        return 0.0
-    if env.category_given == env.current_ticket["true_category"]:
-        return 1.0
-    return 0.0
-
-
-# Priority partial credit map
 PRIORITY_PARTIAL = {
     ("critical", "high"): 0.25,
     ("high", "critical"): 0.25,
@@ -54,6 +46,17 @@ PRIORITY_PARTIAL = {
     ("low", "medium"): 0.25,
 }
 
+
+# ─── Graders ───────────────────────────────────────────────
+
+def grade_easy(env: CustomerSupportEnv) -> float:
+    if not env.classified:
+        return 0.01
+    if env.category_given == env.current_ticket["true_category"]:
+        return clip_score(0.99)
+    return 0.01
+
+
 def grade_medium(env: CustomerSupportEnv) -> float:
     score = 0.0
     if env.classified and env.category_given == env.current_ticket["true_category"]:
@@ -62,12 +65,11 @@ def grade_medium(env: CustomerSupportEnv) -> float:
         if env.priority_given == env.current_ticket["true_priority"]:
             score += 0.5
         else:
-            # Partial credit for close priority
             partial = PRIORITY_PARTIAL.get(
                 (env.priority_given, env.current_ticket["true_priority"]), 0.0
             )
             score += partial
-    return round(score, 2)
+    return clip_score(score)
 
 
 def grade_hard(env: CustomerSupportEnv) -> float:
@@ -85,7 +87,7 @@ def grade_hard(env: CustomerSupportEnv) -> float:
     if env.replied:
         reply_score = env._grade_reply(env.reply_given)
         score += reply_score * 0.4
-    return round(score, 2)
+    return clip_score(score)
 
 
 def get_grader(task_level: str):
@@ -111,7 +113,6 @@ if __name__ == "__main__":
 
         task = TASKS[level]
 
-        # Simulate a correct agent
         if "classify" in task["actions_required"]:
             action = Action(
                 action_type="classify",
