@@ -28,9 +28,11 @@ def health():
     return {"status": "ok", "message": "Customer Support Triage Environment is running"}
 
 @app.post("/reset")
-def reset(request: ResetRequest):
+def reset(request: Optional[ResetRequest] = None):
     global env
-    task_level = request.task_level or "easy"
+    task_level = "easy"
+    if request and request.task_level:
+        task_level = request.task_level
     if task_level not in ["easy", "medium", "hard"]:
         raise HTTPException(status_code=400, detail="task_level must be easy, medium, or hard")
     env = CustomerSupportEnv(task_level=task_level)
