@@ -3,31 +3,14 @@ from openai import OpenAI
 from environment import CustomerSupportEnv, Action
 from tasks import TASKS, get_grader
 
-# ─── Environment Variables ─────────────────────────────────
-
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
-HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
-
-# ─── OpenAI Client ─────────────────────────────────────────
 
 def get_client():
     token = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
     if token is None:
         raise ValueError("HF_TOKEN or OPENAI_API_KEY environment variable is required")
-    return OpenAI(
-        base_url=API_BASE_URL,
-        api_key=token
-    )
-
-# ─── OpenAI Client ─────────────────────────────────────────
-
-client = OpenAI(
-    base_url=API_BASE_URL,
-    api_key=HF_TOKEN
-)
-
-# ─── System Prompt ─────────────────────────────────────────
+    return OpenAI(base_url=API_BASE_URL, api_key=token)
 
 SYSTEM_PROMPT = """You are an expert customer support triage agent with 10 years of experience.
 You are precise, professional, and always follow the exact output format requested.
@@ -52,8 +35,6 @@ When drafting replies you always:
 - End with a polite closing
 - Keep it under 3 sentences
 """
-
-# ─── Few Shot Examples ─────────────────────────────────────
 
 FEW_SHOT_EXAMPLES = """
 Here are some examples of correct responses:
@@ -83,11 +64,8 @@ Priority: set_priority(high)
 Reply: draft_reply(We sincerely apologize for the payment issue. We are investigating the duplicate charge and will resolve it within 2 hours. Thank you for your patience.)
 """
 
-# ─── Prompt Builders ───────────────────────────────────────
-
 def build_prompt(task_level: str, observation) -> str:
     task = TASKS[task_level]
-
     base = f"""{FEW_SHOT_EXAMPLES}
 
 Now handle this ticket:
@@ -100,7 +78,6 @@ Think step by step:
 3. How urgent does this seem?
 
 """
-
     if task_level == "easy":
         base += f"""Your job is to classify this ticket into exactly one category.
 Categories: {", ".join(task["categories"])}
@@ -126,7 +103,7 @@ Now assign a priority level based on urgency.
 
 Priority Guide:
 - critical: customer very distressed, immediate action needed
-- high: significant problem, needs quick resolution  
+- high: significant problem, needs quick resolution
 - medium: moderate issue, handle within few hours
 - low: minor issue, can wait
 
@@ -146,7 +123,6 @@ Respond in EXACTLY this format, nothing else:
 classify(<category>)
 
 Example: classify(billing)"""
-
         elif not observation.priority:
             base += f"""Category has been set to: {observation.category}
 
@@ -164,7 +140,6 @@ Respond in EXACTLY this format, nothing else:
 set_priority(<priority>)
 
 Example: set_priority(high)"""
-
         else:
             base += f"""Category: {observation.category}
 Priority: {observation.priority}
@@ -184,13 +159,8 @@ Example: draft_reply(We sincerely apologize for the inconvenience. Our team will
 
     return base
 
-
 def parse_action(response_text: str) -> Action:
-    """Parse LLM response into Action object"""
-    # Clean up response
     text = response_text.strip()
-
-    # Sometimes LLM adds explanation before the action — extract just the action
     lines = text.split('\n')
     for line in lines:
         line = line.strip()
@@ -203,30 +173,21 @@ def parse_action(response_text: str) -> Action:
         elif line.startswith("draft_reply("):
             value = line[len("draft_reply("):-1].strip().strip("'\"")
             return Action(action_type="draft_reply", value=value)
-
-    # Fallback — try to find action anywhere in text
     if "classify(" in text:
         start = text.index("classify(") + len("classify(")
         end = text.index(")", start)
-        value = text[start:end].strip().strip("'\"")
-        return Action(action_type="classify", value=value)
+        return Action(action_type="classify", value=text[start:end].strip().strip("'\""))
     elif "set_priority(" in text:
         start = text.index("set_priority(") + len("set_priority(")
         end = text.index(")", start)
-        value = text[start:end].strip().strip("'\"")
-        return Action(action_type="set_priority", value=value)
+        return Action(action_type="set_priority", value=text[start:end].strip().strip("'\""))
     elif "draft_reply(" in text:
         start = text.index("draft_reply(") + len("draft_reply(")
         end = text.rindex(")")
-        value = text[start:end].strip().strip("'\"")
-        return Action(action_type="draft_reply", value=value)
-
-    # Default fallback
+        return Action(action_type="draft_reply", value=text[start:end].strip().strip("'\""))
     return Action(action_type="classify", value="general")
 
-
 def call_llm(prompt: str) -> str:
-    """Call LLM with system prompt and return response"""
     client = get_client()
     response = client.chat.completions.create(
         model=MODEL_NAME,
@@ -238,9 +199,6 @@ def call_llm(prompt: str) -> str:
         ]
     )
     return response.choices[0].message.content.strip()
-
-
-# ─── Main Runner ───────────────────────────────────────────
 
 def run_task(task_level: str):
     task = TASKS[task_level]
@@ -255,58 +213,43 @@ def run_task(task_level: str):
 
     while not env.done:
         step_num += 1
-
         try:
             prompt = build_prompt(task_level, obs)
             response_text = call_llm(prompt)
             action = parse_action(response_text)
-
             result = env.step(action)
             obs = result.observation
             reward = result.reward
             done = result.done
             last_error = result.info.get("error", None)
             rewards.append(reward)
-
             action_str = f"{action.action_type}('{action.value}')"
             error_str = last_error if last_error else "null"
             print(f"[STEP] step={step_num} action={action_str} reward={reward:.2f} done={str(done).lower()} error={error_str}")
-
-
         except Exception as e:
-
             last_error = str(e)
-
-            rewards.append(0.01)  # ← change 0.0 to 0.01
-
-            print(f"[STEP] step={step_num} action=null reward=0.01 done=false error={last_error}")
-
+            rewards.append(0.0)
+            print(f"[STEP] step={step_num} action=null reward=0.00 done=false error={last_error}")
             break
 
     grader = get_grader(task_level)
     final_score = grader(env)
     success = final_score >= 0.5
-
-    rewards_str = ",".join([f"{max(0.01, min(0.99, r)):.2f}" for r in rewards])
-    print(f"[END] success={str(success).lower()} steps={step_num} rewards={rewards_str}")
-
+    rewards_str = ",".join([f"{r:.2f}" for r in rewards])
+    print(f"[END] success={str(success).lower()} steps={step_num} score={final_score:.2f} rewards={rewards_str}")
+    env.close()
     return final_score
-
-
-# ─── Entry Point ───────────────────────────────────────────
 
 if __name__ == "__main__":
     print("=" * 50)
     print("Customer Support Triage — Baseline Evaluation")
     print("=" * 50)
-
     scores = []
     for level in ["easy", "medium", "hard"]:
         print(f"\n--- Running {level.upper()} task ---")
         score = run_task(level)
         scores.append(score)
         print(f"Score: {score}")
-
     avg = sum(scores) / len(scores)
     print(f"\n{'='*50}")
     print(f"Average Score: {avg:.2f}")

@@ -13,20 +13,14 @@ tasks:
     level: easy
     description: Classify support ticket into correct category
     grader: tasks.grade_easy
-    min_score: 0.01
-    max_score: 0.99
   - name: ticket-classify-priority
     level: medium
     description: Classify ticket and assign priority level
     grader: tasks.grade_medium
-    min_score: 0.01
-    max_score: 0.99
   - name: ticket-full-triage
     level: hard
     description: Classify, prioritize and draft a reply
     grader: tasks.grade_hard
-    min_score: 0.01
-    max_score: 0.99
 action_space:
   - classify(category)
   - set_priority(level)
@@ -38,9 +32,9 @@ observation_space:
   - priority
   - reply
   - step
-reward_range: [0.01, 0.99]
+reward_range: [0.0, 1.0]
 baseline_scores:
-  easy: 0.99
-  medium: 0.89
-  hard: 0.99
-  average: 0.96
+  easy: 0.95
+  medium: 0.87
+  hard: 0.85
+  average: 0.89

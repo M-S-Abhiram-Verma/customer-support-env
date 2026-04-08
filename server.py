@@ -1,17 +1,13 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Optional, Union
+from typing import Optional
 import uvicorn
 
 from environment import CustomerSupportEnv, Action
 from tasks import get_grader, TASKS
 
 app = FastAPI(title="Customer Support Triage Environment")
-
-# Global environment instance
 env = CustomerSupportEnv(task_level="easy")
-
-# ─── Request Models ────────────────────────────────────────
 
 class ActionRequest(BaseModel):
     action_type: str
@@ -20,8 +16,6 @@ class ActionRequest(BaseModel):
 
 class ResetRequest(BaseModel):
     task_level: Optional[str] = "easy"
-
-# ─── Endpoints ─────────────────────────────────────────────
 
 @app.get("/health")
 def health():
@@ -43,45 +37,29 @@ def reset(request: Optional[ResetRequest] = None):
         "message": f"Environment reset for {task_level} task"
     }
 
-
 @app.post("/step")
 def step(request: ActionRequest):
     global env
     if env.current_ticket is None:
         raise HTTPException(status_code=400, detail="Environment not initialized. Call /reset first.")
-    action = Action(
-        action_type=request.action_type,
-        value=request.value
-    )
+    action = Action(action_type=request.action_type, value=request.value)
     result = env.step(action)
     grader = get_grader(env.task_level)
-    raw_score = grader(env)
-
-    # Always return a valid score — never null
-    final_score = round(max(0.01, min(0.99, raw_score)), 2)
-
-    reward = round(max(0.01, min(0.99, result.reward)), 2)
-
+    final_score = grader(env)
     return {
         "observation": result.observation.dict(),
-        "reward": reward,
+        "reward": result.reward,
         "done": result.done,
         "info": result.info,
-        "final_score": final_score  # Always between 0.01 and 0.99
+        "final_score": final_score
     }
 
 @app.get("/grade/{task_level}")
 def grade(task_level: str):
     global env
     grader = get_grader(task_level)
-    raw_score = grader(env)
-    if raw_score <= 0.0:
-        final_score = 0.01
-    elif raw_score >= 1.0:
-        final_score = 0.99
-    else:
-        final_score = round(raw_score, 2)
-    return {"task_level": task_level, "score": final_score}
+    score = grader(env)
+    return {"task_level": task_level, "score": score}
 
 @app.get("/state")
 def state():
