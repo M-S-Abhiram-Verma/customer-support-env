@@ -1,0 +1,37 @@
+name: customer-support-triage
+version: 1.0.0
+description: >
+  A real-world customer support triage environment where an LLM agent
+  classifies tickets, assigns priority, and drafts replies.
+tags:
+  - openenv
+  - customer-support
+  - triage
+  - nlp
+tasks:
+  - name: ticket-classify
+    level: easy
+    description: Classify support ticket into correct category
+  - name: ticket-classify-priority
+    level: medium
+    description: Classify ticket and assign priority level
+  - name: ticket-full-triage
+    level: hard
+    description: Classify, prioritize and draft a reply
+action_space:
+  - classify(category)
+  - set_priority(level)
+  - draft_reply(text)
+observation_space:
+  - ticket_id
+  - message
+  - category
+  - priority
+  - reply
+  - step
+reward_range: [0.0, 1.0]
+baseline_scores:
+  easy: 1.0
+  medium: 0.90
+  hard: 1.0
+  average: 0.97
