@@ -12,12 +12,21 @@ tasks:
   - name: ticket-classify
     level: easy
     description: Classify support ticket into correct category
+    grader: tasks.grade_easy
+    min_score: 0.01
+    max_score: 0.99
   - name: ticket-classify-priority
     level: medium
     description: Classify ticket and assign priority level
+    grader: tasks.grade_medium
+    min_score: 0.01
+    max_score: 0.99
   - name: ticket-full-triage
     level: hard
     description: Classify, prioritize and draft a reply
+    grader: tasks.grade_hard
+    min_score: 0.01
+    max_score: 0.99
 action_space:
   - classify(category)
   - set_priority(level)

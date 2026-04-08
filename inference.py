@@ -5,12 +5,20 @@ from tasks import TASKS, get_grader
 
 # ─── Environment Variables ─────────────────────────────────
 
-API_BASE_URL = os.getenv("API_BASE_URL", "https://api.groq.com/openai/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "llama-3.1-8b-instant")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
 
-if HF_TOKEN is None:
-    raise ValueError("HF_TOKEN or OPENAI_API_KEY environment variable is required")
+# ─── OpenAI Client ─────────────────────────────────────────
+
+def get_client():
+    token = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
+    if token is None:
+        raise ValueError("HF_TOKEN or OPENAI_API_KEY environment variable is required")
+    return OpenAI(
+        base_url=API_BASE_URL,
+        api_key=token
+    )
 
 # ─── OpenAI Client ─────────────────────────────────────────
 
@@ -219,10 +227,11 @@ def parse_action(response_text: str) -> Action:
 
 def call_llm(prompt: str) -> str:
     """Call LLM with system prompt and return response"""
+    client = get_client()
     response = client.chat.completions.create(
         model=MODEL_NAME,
         max_tokens=1000,
-        temperature=0.1,  # Low temperature = more consistent answers
+        temperature=0.1,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt}

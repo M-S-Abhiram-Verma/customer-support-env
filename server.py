@@ -55,26 +55,19 @@ def step(request: ActionRequest):
     )
     result = env.step(action)
     grader = get_grader(env.task_level)
-    raw_score = grader(env) if result.done else None
+    raw_score = grader(env)
 
-    # Force all scores strictly between 0 and 1
-    final_score = None
-    if raw_score is not None:
-        if raw_score <= 0.0:
-            final_score = 0.01
-        elif raw_score >= 1.0:
-            final_score = 0.99
-        else:
-            final_score = round(raw_score, 2)
+    # Always return a valid score — never null
+    final_score = round(max(0.01, min(0.99, raw_score)), 2)
 
-    reward = max(0.01, min(0.99, result.reward))
+    reward = round(max(0.01, min(0.99, result.reward)), 2)
 
     return {
         "observation": result.observation.dict(),
         "reward": reward,
         "done": result.done,
         "info": result.info,
-        "final_score": final_score
+        "final_score": final_score  # Always between 0.01 and 0.99
     }
 
 @app.get("/grade/{task_level}")
