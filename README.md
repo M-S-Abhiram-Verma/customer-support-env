@@ -1,3 +1,16 @@
+---
+title: Customer Support Triage Environment
+emoji: 🎧
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+tags:
+  - openenv
+  - customer-support
+  - reinforcement-learning
+---
+
 # 🎧 Customer Support Triage Environment
 
 An OpenEnv-compliant reinforcement learning environment that simulates
