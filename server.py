@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Union
 import uvicorn
 
 from environment import CustomerSupportEnv, Action
