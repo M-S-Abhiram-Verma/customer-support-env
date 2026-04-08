@@ -1,5 +1,13 @@
 from environment import CustomerSupportEnv, Action
 
+def strict_score(score: float) -> float:
+    """Force score strictly between 0 and 1 — never exactly 0.0 or 1.0"""
+    if score <= 0.0:
+        return 0.01
+    if score >= 1.0:
+        return 0.99
+    return round(score, 2)
+
 
 def clip_score(score: float) -> float:
     """Ensure score is strictly between 0 and 1 (not 0.0, not 1.0)"""
@@ -49,36 +57,34 @@ PRIORITY_PARTIAL = {
 
 # ─── Graders ───────────────────────────────────────────────
 
-def grade_easy(env: CustomerSupportEnv) -> float:
+def grade_easy(env) -> float:
     if not env.classified:
-        return 0.01
+        return strict_score(0.0)
     if env.category_given == env.current_ticket["true_category"]:
-        return 0.99
-    return 0.01
+        return strict_score(1.0)
+    return strict_score(0.0)
 
-
-def grade_medium(env: CustomerSupportEnv) -> float:
-    score = 0.01
+def grade_medium(env) -> float:
+    score = 0.0
     if env.classified and env.category_given == env.current_ticket["true_category"]:
-        score += 0.49
+        score += 0.5
     if env.prioritized:
         if env.priority_given == env.current_ticket["true_priority"]:
-            score += 0.49
+            score += 0.5
         else:
             partial = PRIORITY_PARTIAL.get(
                 (env.priority_given, env.current_ticket["true_priority"]), 0.0
             )
             score += partial
-    return round(min(0.99, max(0.01, score)), 2)
+    return strict_score(score)
 
-
-def grade_hard(env: CustomerSupportEnv) -> float:
-    score = 0.01
+def grade_hard(env) -> float:
+    score = 0.0
     if env.classified and env.category_given == env.current_ticket["true_category"]:
-        score += 0.29
+        score += 0.3
     if env.prioritized:
         if env.priority_given == env.current_ticket["true_priority"]:
-            score += 0.29
+            score += 0.3
         else:
             partial = PRIORITY_PARTIAL.get(
                 (env.priority_given, env.current_ticket["true_priority"]), 0.0
@@ -86,8 +92,8 @@ def grade_hard(env: CustomerSupportEnv) -> float:
             score += partial
     if env.replied:
         reply_score = env._grade_reply(env.reply_given)
-        score += reply_score * 0.39
-    return round(min(0.99, max(0.01, score)), 2)
+        score += reply_score * 0.4
+    return strict_score(score)
 
 
 def get_grader(task_level: str):

@@ -253,6 +253,8 @@ class CustomerSupportEnv:
             reward = 0.01
             info["error"] = f"Unknown action type: {action.action_type}"
 
+        # Force reward strictly between 0 and 1
+        reward = max(0.01, min(0.99, reward))
         self.rewards.append(reward)
         self.done = self._check_done()
 
