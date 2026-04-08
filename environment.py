@@ -304,7 +304,7 @@ class CustomerSupportEnv:
             "classified": self.classified,
             "prioritized": self.prioritized,
             "replied": self.replied,
-            "rewards": self.rewards,
+            "rewards": [max(0.01, min(0.99, r)) for r in self.rewards],
             "done": self.done
         }
 

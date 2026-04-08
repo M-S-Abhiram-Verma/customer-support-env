@@ -28,9 +28,9 @@ LLM agents can perform this task reliably and accurately.
 
 | Task | Level | Description | Max Score |
 |------|-------|-------------|-----------|
-| ticket-classify | Easy | Classify ticket into correct category | 1.0 |
-| ticket-classify-priority | Medium | Classify + assign priority level | 1.0 |
-| ticket-full-triage | Hard | Classify + priority + draft reply | 1.0 |
+| ticket-classify | Easy | Classify ticket into correct category | 0.99 |
+| ticket-classify-priority | Medium | Classify + assign priority level | 0.99 |
+| ticket-full-triage | Hard | Classify + priority + draft reply | 0.99 |
 
 ### Difficulty Progression
 - **Easy**: Single decision — pick the right category from 5 options
@@ -66,9 +66,9 @@ LLM agents can perform this task reliably and accurately.
 
 | Action | Correct | Partial | Wrong |
 |--------|---------|---------|-------|
-| classify | 1.0 | 0.5 (close category) | 0.0 |
-| set_priority | 1.0 | 0.25 (adjacent level) | 0.0 |
-| draft_reply | 0.25–1.0 | based on quality | 0.0 |
+| classify | 0.99 | 0.5 (close category) | 0.01 |
+| set_priority | 0.99 | 0.25 (adjacent level) | 0.01 |
+| draft_reply | 0.25–0.99 | based on quality | 0.01 |
 
 Reply scoring breakdown:
 - Apology present → +0.25

@@ -43,6 +43,7 @@ def reset(request: Optional[ResetRequest] = None):
         "message": f"Environment reset for {task_level} task"
     }
 
+
 @app.post("/step")
 def step(request: ActionRequest):
     global env
@@ -54,14 +55,40 @@ def step(request: ActionRequest):
     )
     result = env.step(action)
     grader = get_grader(env.task_level)
-    final_score = grader(env) if result.done else None
+    raw_score = grader(env) if result.done else None
+
+    # Force all scores strictly between 0 and 1
+    final_score = None
+    if raw_score is not None:
+        if raw_score <= 0.0:
+            final_score = 0.01
+        elif raw_score >= 1.0:
+            final_score = 0.99
+        else:
+            final_score = round(raw_score, 2)
+
+    reward = max(0.01, min(0.99, result.reward))
+
     return {
         "observation": result.observation.dict(),
-        "reward": result.reward,
+        "reward": reward,
         "done": result.done,
         "info": result.info,
         "final_score": final_score
     }
+
+@app.get("/grade/{task_level}")
+def grade(task_level: str):
+    global env
+    grader = get_grader(task_level)
+    raw_score = grader(env)
+    if raw_score <= 0.0:
+        final_score = 0.01
+    elif raw_score >= 1.0:
+        final_score = 0.99
+    else:
+        final_score = round(raw_score, 2)
+    return {"task_level": task_level, "score": final_score}
 
 @app.get("/state")
 def state():

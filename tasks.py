@@ -58,13 +58,16 @@ PRIORITY_PARTIAL = {
 # ─── Graders ───────────────────────────────────────────────
 
 def grade_easy(env) -> float:
-    if not env.classified:
-        return strict_score(0.0)
+    if not env.classified or env.current_ticket is None:
+        return 0.01
     if env.category_given == env.current_ticket["true_category"]:
-        return strict_score(1.0)
-    return strict_score(0.0)
+        return 0.99
+    return 0.01
+
 
 def grade_medium(env) -> float:
+    if env.current_ticket is None:
+        return 0.01
     score = 0.0
     if env.classified and env.category_given == env.current_ticket["true_category"]:
         score += 0.5
@@ -78,7 +81,10 @@ def grade_medium(env) -> float:
             score += partial
     return strict_score(score)
 
+
 def grade_hard(env) -> float:
+    if env.current_ticket is None:
+        return 0.01
     score = 0.0
     if env.classified and env.category_given == env.current_ticket["true_category"]:
         score += 0.3
@@ -90,7 +96,7 @@ def grade_hard(env) -> float:
                 (env.priority_given, env.current_ticket["true_priority"]), 0.0
             )
             score += partial
-    if env.replied:
+    if env.replied and env.reply_given:
         reply_score = env._grade_reply(env.reply_given)
         score += reply_score * 0.4
     return strict_score(score)
