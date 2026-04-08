@@ -53,32 +53,32 @@ def grade_easy(env: CustomerSupportEnv) -> float:
     if not env.classified:
         return 0.01
     if env.category_given == env.current_ticket["true_category"]:
-        return clip_score(0.99)
+        return 0.99
     return 0.01
 
 
 def grade_medium(env: CustomerSupportEnv) -> float:
-    score = 0.0
+    score = 0.01
     if env.classified and env.category_given == env.current_ticket["true_category"]:
-        score += 0.5
+        score += 0.49
     if env.prioritized:
         if env.priority_given == env.current_ticket["true_priority"]:
-            score += 0.5
+            score += 0.49
         else:
             partial = PRIORITY_PARTIAL.get(
                 (env.priority_given, env.current_ticket["true_priority"]), 0.0
             )
             score += partial
-    return clip_score(score)
+    return round(min(0.99, max(0.01, score)), 2)
 
 
 def grade_hard(env: CustomerSupportEnv) -> float:
-    score = 0.0
+    score = 0.01
     if env.classified and env.category_given == env.current_ticket["true_category"]:
-        score += 0.3
+        score += 0.29
     if env.prioritized:
         if env.priority_given == env.current_ticket["true_priority"]:
-            score += 0.3
+            score += 0.29
         else:
             partial = PRIORITY_PARTIAL.get(
                 (env.priority_given, env.current_ticket["true_priority"]), 0.0
@@ -86,8 +86,8 @@ def grade_hard(env: CustomerSupportEnv) -> float:
             score += partial
     if env.replied:
         reply_score = env._grade_reply(env.reply_given)
-        score += reply_score * 0.4
-    return clip_score(score)
+        score += reply_score * 0.39
+    return round(min(0.99, max(0.01, score)), 2)
 
 
 def get_grader(task_level: str):
