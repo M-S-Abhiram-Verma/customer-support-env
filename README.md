@@ -82,10 +82,10 @@ Evaluated over 5 episodes using `llama-3.1-8b-instant` via Groq:
 
 | Task | Average | Best | Worst | Std Dev |
 |------|---------|------|-------|---------|
-| Easy | 1.00 | 1.00 | 1.00 | 0.00 |
-| Medium | 0.90 | 1.00 | 0.75 | 0.14 |
-| Hard | 1.00 | 1.00 | 1.00 | 0.00 |
-| **Overall** | **0.97** | | | |
+| Easy | 0.79 | 0.99 | 0.01 | 0.44 |
+| Medium | 0.89 | 0.99 | 0.75 | 0.13 |
+| Hard | 0.90 | 0.99 | 0.69 | 0.13 |
+| **Overall** | **0.86** | | | |
 
 ## 🚀 Setup & Usage
 

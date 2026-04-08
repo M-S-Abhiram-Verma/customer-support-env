@@ -1,6 +1,6 @@
 import random
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional
 
 # Categories that are close enough for partial credit
 CATEGORY_PARTIAL = {
@@ -25,8 +25,8 @@ class Observation(BaseModel):
 
 
 class Action(BaseModel):
-    action_type: str        # "classify", "set_priority", "draft_reply"
-    value: str              # the actual value
+    action_type: str
+    value: str
 
 
 class StepResult(BaseModel):
@@ -186,39 +186,29 @@ TICKETS = [
 
 class CustomerSupportEnv:
     def __init__(self, task_level: str = "easy"):
-        """
-        task_level: "easy", "medium", or "hard"
-        """
         self.task_level = task_level
         self.current_ticket = None
         self.current_step = 0
         self.done = False
         self.rewards = []
-
-        # Track what agent has done
         self.classified = False
         self.prioritized = False
         self.replied = False
-
         self.category_given = None
         self.priority_given = None
         self.reply_given = None
 
     def reset(self) -> Observation:
-        """Reset env and return first observation"""
         self.current_ticket = random.choice(TICKETS)
         self.current_step = 0
         self.done = False
         self.rewards = []
-
         self.classified = False
         self.prioritized = False
         self.replied = False
-
         self.category_given = None
         self.priority_given = None
         self.reply_given = None
-
         return Observation(
             ticket_id=self.current_ticket["ticket_id"],
             message=self.current_ticket["message"],
@@ -226,33 +216,31 @@ class CustomerSupportEnv:
         )
 
     def step(self, action: Action) -> StepResult:
-        """Process one action and return result"""
         self.current_step += 1
-        reward = 0.0
+        reward = 0.01
         info = {}
 
         if action.action_type == "classify":
             self.category_given = action.value.lower().strip()
             self.classified = True
             if self.category_given == self.current_ticket["true_category"]:
-                reward = 1.0
+                reward = 0.99
                 info["classify"] = "correct"
             else:
-                # Check for partial credit
                 partial = CATEGORY_PARTIAL.get(
                     (self.category_given, self.current_ticket["true_category"]), 0.0
                 )
-                reward = partial
+                reward = max(0.01, partial) if partial > 0 else 0.01
                 info["classify"] = f"wrong — expected {self.current_ticket['true_category']}"
 
         elif action.action_type == "set_priority":
             self.priority_given = action.value.lower().strip()
             self.prioritized = True
             if self.priority_given == self.current_ticket["true_priority"]:
-                reward = 1.0
+                reward = 0.99
                 info["priority"] = "correct"
             else:
-                reward = 0.0
+                reward = 0.01
                 info["priority"] = f"wrong — expected {self.current_ticket['true_priority']}"
 
         elif action.action_type == "draft_reply":
@@ -262,12 +250,10 @@ class CustomerSupportEnv:
             info["reply_score"] = reward
 
         else:
-            reward = 0.0
+            reward = 0.01
             info["error"] = f"Unknown action type: {action.action_type}"
 
         self.rewards.append(reward)
-
-        # Check if task is done based on level
         self.done = self._check_done()
 
         obs = Observation(
@@ -287,7 +273,6 @@ class CustomerSupportEnv:
         )
 
     def _check_done(self) -> bool:
-        """Check if all required actions for task level are done"""
         if self.task_level == "easy":
             return self.classified
         elif self.task_level == "medium":
@@ -297,30 +282,19 @@ class CustomerSupportEnv:
         return False
 
     def _grade_reply(self, reply: str) -> float:
-        """Grade the drafted reply out of 1.0"""
         score = 0.0
         keywords = self.current_ticket["keywords"]
-
-        # Check for apology
         if any(word in reply for word in ["sorry", "apologize", "apologies"]):
-            score += 0.25
-
-        # Check for resolution intent
+            score += 0.24
         if any(word in reply for word in ["help", "resolve", "fix", "investigate", "assist"]):
-            score += 0.25
-
-        # Check relevance to ticket
+            score += 0.24
         if any(word in reply for word in keywords):
-            score += 0.25
-
-        # Check polite closing
+            score += 0.24
         if any(word in reply for word in ["thank", "regards", "sincerely", "team"]):
-            score += 0.25
-
-        return round(score, 2)
+            score += 0.24
+        return round(max(0.01, min(0.99, score + 0.01)), 2)
 
     def state(self) -> dict:
-        """Return current state"""
         return {
             "ticket": self.current_ticket,
             "step": self.current_step,
@@ -333,5 +307,4 @@ class CustomerSupportEnv:
         }
 
     def close(self):
-        """Clean up"""
         pass
