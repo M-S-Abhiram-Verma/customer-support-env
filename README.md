@@ -136,6 +136,7 @@ curl -X POST http://localhost:7860/step \
 
 ## 📁 Project Structure
 
+```
 support_env/
 ├── environment.py    # Core environment logic
 ├── tasks.py          # Task definitions and graders
@@ -146,6 +147,7 @@ support_env/
 ├── requirements.txt  # Dependencies
 ├── Dockerfile        # Container config
 └── README.md         # Documentation
+```
 
 ## 🏷️ Tags
 `openenv` `customer-support` `triage` `nlp` `llm` `reinforcement-learning`
